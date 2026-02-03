@@ -13,7 +13,9 @@ import java.util.stream.Stream;
 
 import javax.print.attribute.standard.Media;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -27,6 +29,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -65,8 +68,21 @@ import com.nimbusds.jose.proc.SecurityContext;
 @EnableMethodSecurity(prePostEnabled = true)
 public class AuthSecurityConfig {
 	
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+	
+	//get issuer from docker-compose.yml
+	@Value("${spring.security.oauth2.authorizationserver.issuer}")
+	private String issuerUri;
+	
+	
+	@Bean
+	public ModelMapper modelMapper() {
+		return new ModelMapper();
+	}
+	
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
 	// 1. Authorization server security filter chain (handle /oauth/** endpoints)
 
@@ -100,7 +116,7 @@ public class AuthSecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 			.cors(Customizer.withDefaults())
 			.requestCache(cache -> cache.requestCache(requestCache))
-			.authorizeHttpRequests(auth -> auth.requestMatchers("/login", "/api/v4/auth/signup", "/error", "/actuator/**", "/favicon.ico", "/.well.known")
+			.authorizeHttpRequests(auth -> auth.requestMatchers("/login", "/api/v4/auth/signup", "/error", "/actuator/**", "/favicon.ico", "/.well.known/appspecific/**")
 												.permitAll()
 												.requestMatchers(HttpMethod.POST, "/api/v4/auth/admin/create-user").hasRole("ADMIN")
 												.requestMatchers("/api/v4/me").authenticated()
@@ -127,9 +143,9 @@ public class AuthSecurityConfig {
 	
 	// 3. Client Registration (React Frontend)
 	@Bean
-	public RegisteredClientRepository registeredClientRepository() {
+	public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
 		RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString()).clientId("my-gateway-client")
-												.clientSecret(this.passwordEncoder.encode("secret"))
+												.clientSecret(passwordEncoder.encode("secret"))
 												.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 												.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 												.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -169,10 +185,10 @@ public class AuthSecurityConfig {
 		return builder.getAuthenticationManager();
 	}
 	
-	// 4.Authorization server setting (auth server endpoint)
+	// 4.Authorization server setting (auth server endpoint, when dockering then get issuer url dynamically) 
 	@Bean 
 	public AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder().issuer("http://localhost:8086").build();
+		return AuthorizationServerSettings.builder().issuer(issuerUri).build();
 	}
 	
 	// 5. get jwt claim for token and user info
@@ -184,7 +200,7 @@ public class AuthSecurityConfig {
 			if(OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())){
 				
 				context.getClaims().audience(List.of("my-gateway-client"));
-				context.getClaims().issuer("http://localhost:8086");
+				context.getClaims().issuer(issuerUri);  // if working on local machine then '"http://localhost:8086"'
 				
 				//get authentication wrapper
 				Authentication auth = context.getPrincipal();

@@ -85,12 +85,8 @@ public class UserCtrl {
 	
 //	@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
 	@GetMapping("/{userId}")
-//	@CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
-//	@Retry(name = "ratingHotelService", fallbackMethod = "ratingHotelFallback")
-//	@RateLimiter(name = "empRateLimiter",fallbackMethod = "ratingHotelFallback")
 	public ResponseEntity<UserDto> getData(@PathVariable String userId) {
-//		logger.info("Retry-Count : {}", retrycount);
-//		retrycount++;
+
 		UserDto user = userService.getUser(userId);
 		if(user!=null) {
 			return ResponseEntity.ok(user);
@@ -99,15 +95,6 @@ public class UserCtrl {
 		}
 	}
 	
-	public ResponseEntity<UserDto> ratingHotelFallback(String userid,Exception ex){
-		logger.info("Fall back executed because service is down : ", ex.getMessage());
-		UserDto user = new UserDto();
-				user.setName("dummy");
-				user.setContactNo("xxxx-xxxx-xx");
-				user.setAddress("No Service Is Available Because Service Is down!");
-				user.setUserId("xxxxx");
-		return new ResponseEntity<>(user, HttpStatus.OK);
-	}
 	
 	@PostMapping("/add/image/{userId}")
 	public ResponseEntity<UserDto> addImage(@RequestParam MultipartFile image,@PathVariable String userId) throws IOException{

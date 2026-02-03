@@ -50,15 +50,15 @@ spring:
 # ------------ caching strategy
   data:
     redis:
-      host: localhost
+      host: redis     #if running on local machine 'localhost''
       port: 6379
 
-#-------------- oauth2 properties --------------------
+#-------------- oauth2 properties (get issuer dynamically from docker-compose if dockerizing)--------------------
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8086
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8086}
       client:
         registration:
           my-gateway-client:
@@ -74,13 +74,18 @@ spring:
               - api.read
         provider:
           my-auth-server:   #same name as above custom provider-name
-            issuer-uri: http://localhost:8086
+            issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8086}
 
   session:
     timeout: 24h
 
 #--------- checking health remove redis when running in localhost------------ 
-management:
-  health:
-    redis:
-      enabled: false
+#management:
+#  health:
+#    redis:
+#      enabled: false
+
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
+#    org.springframework.security.oauth2: DEBUG

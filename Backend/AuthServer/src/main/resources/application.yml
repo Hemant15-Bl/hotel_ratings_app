@@ -10,7 +10,7 @@ spring:
     name: AUTH-SERVICE
 
   config:
-    import: optional:configserver:http://localhost:8085
+    import: optional:configserver:http://config-server:8085
 #  cloud:
 #    config:
 #      fail-fast: true
@@ -20,6 +20,7 @@ spring:
     username: postgres
     password: root
 
+
   jpa:
     show-sql: true
     hibernate:
@@ -28,7 +29,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
+  #if run docker (default for browser)
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: http://localhost:8086
+
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
+#    org.springframework.security.oauth2: DEBUG
+

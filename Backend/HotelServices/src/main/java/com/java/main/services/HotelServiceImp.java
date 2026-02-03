@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -60,18 +61,24 @@ public class HotelServiceImp implements HotelService{
 		
 		String name = file.getOriginalFilename();
 		
-		String randomId = UUID.randomUUID().toString();
+		String fileName = UUID.randomUUID().toString()+ "_"+ name;
 		
-		String fileName = randomId.concat(name.substring(name.lastIndexOf(".")));
+//		String fileName = randomId.concat(name.substring(name.lastIndexOf(".")));
 		
-		String filePath = path + File.separator+ fileName;
-		
-		File file2 = new File(path);
-		if(!file2.exists()) {
-			file2.mkdir();
+//		String filePath = path + File.separator+ fileName;
+//		
+//		File file2 = new File(path);
+//		if(!file2.exists()) {
+//			file2.mkdir();
+//		}
+//		
+//		Files.copy(file.getInputStream(), Paths.get(filePath));
+		Path rootLocation = Paths.get(path);
+		if (!Files.exists(rootLocation)) {
+			Files.createDirectories(rootLocation);
 		}
 		
-		Files.copy(file.getInputStream(), Paths.get(filePath));
+		Files.copy(file.getInputStream(), rootLocation.resolve(fileName));
 		return fileName;
 	}
 

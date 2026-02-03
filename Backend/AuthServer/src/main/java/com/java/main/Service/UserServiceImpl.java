@@ -2,6 +2,7 @@ package com.java.main.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,20 +37,17 @@ public class UserServiceImpl {
 
 	@Autowired
 	private ModelMapper modelMapper;
-	
-	//---------- register user -------------------------
+
+	// ---------- register user -------------------------
 	@Transactional
 	public UserDto registerUser(UserDto userDto) {
+		Optional<User> existUser = this.authUserRepo.findByEmail(userDto.getEmail());
+		if (existUser.isPresent()) {
+			System.out.println("User is already registered with email: " + userDto.getEmail());
+			return this.modelMapper.map(existUser.get(), UserDto.class);
+		}
 
-		// 1. Save to User-Service via Feign
-		UserDto user = this.userService.createUser(userDto);
-
-		// 2. Map to Auth User entity
-		User profile = this.modelMapper.map(user, User.class);
-		
-		
-
-		// 3. Dynamic Role Assignment
+		// 1. Dynamic Role Assignment
 		if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
 			List<Role> roles = userDto.getRoles().stream().map(r -> {
 
@@ -57,16 +55,29 @@ public class UserServiceImpl {
 						.orElseThrow(() -> new ResourceNotFoundException("Role not found name: " + r.getName()));
 				return role;
 			}).collect(Collectors.toList());
-			userDto.getRoles().clear();
-			userDto.getRoles().addAll(roles);
+//			userDto.getRoles().clear();
+//			userDto.getRoles().addAll(roles);
+			userDto.setRoles(new ArrayList<>(roles));
 		} else {
 			// Default Role (Hardcoded 501 for Normal User)
 			Role defaultRole = this.authRoleRepo.findById(501)
 					.orElseThrow(() -> new ResourceNotFoundException("Role ID 501"));
-			System.out.println("RoleId: "+defaultRole.getId()+"  Name: "+defaultRole.getName());
+			System.out.println("RoleId: " + defaultRole.getId() + "  Name: " + defaultRole.getName());
 			userDto.setRoles(new ArrayList<>());
 			userDto.getRoles().add(defaultRole);
 		}
+
+		// 2. Save to User-Service via Feign
+		UserDto user;
+		try {
+			user = this.userService.createUser(userDto);
+		} catch (Exception e) {
+			throw e;
+		}
+
+		// 3. Map to Auth User entity
+		User profile = this.modelMapper.map(user, User.class);
+
 		User authUser = this.modelMapper.map(userDto, User.class);
 
 		// Setting random userId
@@ -77,19 +88,19 @@ public class UserServiceImpl {
 
 		return this.modelMapper.map(authUser, UserDto.class);
 	}
-	//--------------------------------------------------------------------------------------------
-	
-	
-	//--------------------- update user -----------------------------------
+	// --------------------------------------------------------------------------------------------
+
+	// --------------------- update user -----------------------------------
 	@Transactional
 	public UserDto update(String userId, UserDto userDto) {
-		User updatedUser = this.modelMapper.map(this.userService.editUser(userId, userDto), User.class); // from user-service
+		User updatedUser = this.modelMapper.map(this.userService.editUser(userId, userDto), User.class); // from
+																											// user-service
 
 		User authUser = this.modelMapper.map(userDto, User.class);
 
 		User user = this.authUserRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User Not Found with Id: " + userId));
-		
+
 		user.setName(authUser.getName());
 		user.setContactNo(authUser.getContactNo());
 		user.setAddress(authUser.getAddress());
@@ -97,9 +108,9 @@ public class UserServiceImpl {
 
 		return this.modelMapper.map(this.authUserRepo.save(user), UserDto.class);
 	}
-	//--------------------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------------------
 
-	//--------------------- Delete user -----------------------------------
+	// --------------------- Delete user -----------------------------------
 	@Transactional
 	public void deleteUser(String userId) {
 		User user = this.authUserRepo.findById(userId)

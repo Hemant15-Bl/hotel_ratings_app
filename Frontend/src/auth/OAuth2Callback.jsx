@@ -11,7 +11,7 @@ const OAuth2Callback = () => {
     const { setUser } = useContext(UserContext);
 
     useEffect(() =>{
-        const param = new URLSearchParams(window.location.search);
+        const param = new URLSearchParams(window.location.hash.replace('#', '?'));
         const token = param.get("access_token");
 
         if (token) {

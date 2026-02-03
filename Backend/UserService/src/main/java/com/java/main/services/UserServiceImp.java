@@ -6,11 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -123,6 +125,11 @@ public class UserServiceImp implements UserService {
 	@Override
 	public UserDto register(UserDto userdto) {
 		
+		Optional<User> existsUser = this.userRepository.findByEmail(userdto.getEmail());
+		if (existsUser.isPresent()) {
+			System.out.println(">> ************ User ["+existsUser.get().getEmail()+"] already exists! **************");
+			return this.modelMapper.map(existsUser.get(), UserDto.class);
+		}
 
 		if (userdto.getRoles() != null && !userdto.getRoles().isEmpty()) {
 			List<Role> roles = userdto.getRoles().stream().map(r -> {
@@ -158,20 +165,27 @@ public class UserServiceImp implements UserService {
 
 	@Override
 	public String uploadImage(String path, MultipartFile file) throws IOException {
-
+		
 		String name = file.getOriginalFilename();
 
-		String randomId = UUID.randomUUID().toString();
-		String fileName = randomId.concat(name.substring(name.lastIndexOf(".")));
+		String fileName = UUID.randomUUID().toString()+ "_" + name;
+//		String fileName = randomId.concat(name.substring(name.lastIndexOf(".")));
 
-		String filePath = path + File.separator + fileName;
-
-		File file2 = new File(path);
-		if (!file2.exists()) {
-			file2.mkdir();
+//		String filePath = path + File.separator + fileName;
+//
+//		File file2 = new File(path);
+//		if (!file2.exists()) {
+//		this work only local env.
+//		file2.mkdir();		
+//		}
+	
+//		Files.copy(file.getInputStream(), Paths.get(filePath));
+		
+		Path rootLocation = Paths.get(path);
+		if(!Files.exists(rootLocation)) {
+			Files.createDirectories(rootLocation);
 		}
-
-		Files.copy(file.getInputStream(), Paths.get(filePath));
+		Files.copy(file.getInputStream(), rootLocation.resolve(fileName));
 		return fileName;
 	}
 

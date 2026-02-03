@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,6 +17,8 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -29,6 +32,9 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
+	
+	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+	private String issuerUri;
 
 	//------------ providing endpoints and authenticate them ------------------------------------------------------------
 	@Bean
@@ -72,7 +78,7 @@ public class GatewaySecurityConfig {
 								.flatMap(client -> {
 									
 									String accessToken = client.getAccessToken().getTokenValue(); // get token
-									String redirectURL = "http://localhost:5173/oauth2/callback?access_token="+accessToken; // create url to callback react with token 
+									String redirectURL = "http://localhost:5173/oauth2/callback#access_token="+accessToken; // create url to callback react with token  use fragment(#) while production instead of query (?)
 									
 									// send response to react
 									ServerHttpResponse response = exchange.getExchange().getResponse();
@@ -88,7 +94,9 @@ public class GatewaySecurityConfig {
 	@Bean
 	public ReactiveJwtDecoder jwtDecoder() {
 		// This will fetch the public keys from http://localhost:8084/.well-known/openid-configuration
-		return ReactiveJwtDecoders.fromIssuerLocation("http://localhost:8086");
+		//if running on local then issuer-uri '"http://localhost:8086"'
+		return ReactiveJwtDecoders.fromIssuerLocation(issuerUri);
+	
 	}
 	// ---------------------------------------------------------------------------------------------------------
 
