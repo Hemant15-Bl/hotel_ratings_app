@@ -71,20 +71,20 @@ public class AuthServerApplication implements CommandLineRunner {
 
 				// Small delay to ensure User-Service is ready for the Feign call
 				int attempts = 0;
-//				while (attempts < 15) {
+				while (attempts < 15) {
 					try {
 						// 3. Register the user via Service (this handles password encoding and UUID)
 						UserDto registerUser = this.authUserServiceImpl.registerUser(admin);
 						System.out.println(">> Auth-Server: Successfully registered Admin via Feign. Email: "+registerUser.getEmail());
-//						break;
+						break;
 					} catch (Exception e) {
 						attempts++;
-//						System.out.println(">> Auth-Server: User-Service not ready. Retrying (" + attempts + "/5)...");
+						System.out.println(">> Auth-Server: User-Service not ready. Retrying (" + attempts + "/5)...");
 						System.out.println("Error message: "+e.getMessage());
 						e.printStackTrace();
 						Thread.sleep(15000); // Wait 9 seconds
 					}
-//				}
+				}
 
 			} else {
 				System.out.println(">> Info: Admin user already exists. Skipping initialization.");
