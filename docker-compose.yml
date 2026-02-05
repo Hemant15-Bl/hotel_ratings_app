@@ -1,7 +1,10 @@
 services:
   # 1. Infrastructure: Service-Registry
   discovery-service:
-    build: ./Backend/ServiceRegistry
+    image: hemantbarole/micro-service-registry:latest
+    build:
+      context: ./Backend/ServiceRegistry
+      dockerfile: Dockerfile
     ports:
       - "8761:8761"
     environment:
@@ -17,13 +20,17 @@ services:
   
   # 2. Infrastructure: Config-Server
   config-server:
-    build: ./Backend/ConfigServer
+    image: hemantbarole/micro-config-server:latest
+    build:
+      context: ./Backend/ConfigServer
+      dockerfile: Dockerfile
     ports:
       - "8085:8085"
     environment:
       - spring_profiles_active=docker
       - spring_cloud_config_server_git_uri=https://github.com/Hemant15-Bl/Config
       - eureka_client_serviceUrl_defaultZone=http://discovery-service:8761/eureka/
+      - eureka_instance_hostname=config-server
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 10s
@@ -73,7 +80,10 @@ services:
       - rating-net
 
   auth-service:
-    build: ./Backend/AuthServer
+    image: hemantbarole/micro-auth-server:latest
+    build:
+      context: ./Backend/AuthServer
+      dockerfile: Dockerfile
     ports:
       - "8086:8086"
     environment:
@@ -109,7 +119,10 @@ services:
   
   # 5. Core Service: APIGateway-Service
   apigateway-service:
-    build: ./Backend/APIGateway
+    image: hemantbarole/micro-apigateway-service:latest
+    build:
+      context: ./Backend/APIGateway
+      dockerfile: Dockerfile
     ports:
       - "8084:8084"
     environment:
@@ -173,11 +186,15 @@ services:
       - rating-net
   
   hotel-service:
-    build: ./Backend/HotelServices
+    image: hemantbarole/micro-hotel-service:latest
+    build:
+      context: ./Backend/HotelServices
+      dockerfile: Dockerfile
     ports:
       - "8082:8082"
     volumes:
-      - ./Backend/HotelServices/src/main/resources/static/images:/app/images
+      # - ./Backend/HotelServices/src/main/resources/static/images:/app/images
+      - hotel-images:/app/images
     environment:
       # database connection
       - SPRING_DATASOURCE_URL=jdbc:postgresql://hotel-db:5432/hotelDB
@@ -234,7 +251,10 @@ services:
       - rating-net
   
   rating-service:
-    build: ./Backend/RatingServices
+    image: hemantbarole/micro-rating-service:latest
+    build:
+      context: ./Backend/RatingServices
+      dockerfile: Dockerfile
     ports:
       - "8083:8083"
     environment:
@@ -289,12 +309,15 @@ services:
       - rating-net
   
   user-service:
-    build: ./Backend/UserService
+    image: hemantbarole/micro-user-service:latest
+    build:
+      context: ./Backend/UserService
+      dockerfile: Dockerfile
     ports:
       - "8081:8081"
     volumes:
-      # images
-      - ./Backend/UserService/src/main/resources/static/images:/app/images
+      - user-images:/app/images
+      # - ./Backend/UserService/src/main/resources/static/images:/app/images
     environment:
       # database connection
       - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/userDB
@@ -335,7 +358,10 @@ services:
   
   # 7. Frontend: React Application
   frontend:
-    build: ./frontend
+    image: hemantbarole/micro-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "5173:80"      # Map browser port 5173 to Nginx port 80
     environment:
@@ -354,6 +380,8 @@ volumes:
   rating-db-data:
   user-db-data:
   redis-data:
+  hotel-images:
+  user-images:
 
 networks:
   rating-net:

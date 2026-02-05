@@ -71,7 +71,7 @@ public class AuthServerApplication implements CommandLineRunner {
 
 				// Small delay to ensure User-Service is ready for the Feign call
 				int attempts = 0;
-				while (attempts < 15) {
+				while (attempts < 18) {
 					try {
 						// 3. Register the user via Service (this handles password encoding and UUID)
 						UserDto registerUser = this.authUserServiceImpl.registerUser(admin);

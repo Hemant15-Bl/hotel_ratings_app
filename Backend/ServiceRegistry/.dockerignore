@@ -1,0 +1,12 @@
+# Ignore the source code during COPY (we only need the JAR in the target folder)
+src/
+.git/
+.mvn/
+mvnw*
+pom.xml
+HELP.md
+
+# Ignore logs and IDE settings
+*.log
+.idea/
+.vscode/
