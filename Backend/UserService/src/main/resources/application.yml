@@ -59,4 +59,4 @@ resilience4j:
 
 project:
 #  image: images/     #when run locally
-  image: "C:/Users/hp/git/repository-micro/Backend/UserService/src/main/resources/static/images"
+  image: ${PROJECT_IMAGE:/app/images}

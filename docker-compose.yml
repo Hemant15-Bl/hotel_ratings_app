@@ -5,11 +5,16 @@ services:
     build:
       context: ./Backend/ServiceRegistry
       dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "8761:8761"
     environment:
       - spring_profiles_active=docker
       - SPRING_MAIN_LAZY_INITIALIZATION=true
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
       interval: 30s
@@ -25,6 +30,10 @@ services:
     build:
       context: ./Backend/ConfigServer
       dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "8085:8085"
     environment:
@@ -33,6 +42,7 @@ services:
       - eureka_client_serviceUrl_defaultZone=http://discovery-service:8761/eureka/
       - eureka_instance_hostname=config-server
       - SPRING_MAIN_LAZY_INITIALIZATION=true
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 10s
@@ -86,6 +96,10 @@ services:
     build:
       context: ./Backend/AuthServer
       dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M  # Strict cap: Auth won't take more than 512MB
     ports:
       - "8086:8086"
     environment:
@@ -96,6 +110,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_SHOW_SQL=true
+      - PROPERTIES_HIBERNATE_TEMP_USE_JDBC_METADATA_DEFAULTS=false
       # setting eureka and config server env.
       - eureka_client_serviceUrl_defaultZone=http://discovery-service:8761/eureka/
       - spring_config_import=optional:configserver:http://config-server:8085
@@ -104,6 +119,7 @@ services:
       # setting oauth2.O env.
       - SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER=http://auth-service:8086
 
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1 # Tells Java to stay small
       - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
@@ -127,6 +143,10 @@ services:
     build:
       context: ./Backend/APIGateway
       dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "8084:8084"
     environment:
@@ -150,6 +170,7 @@ services:
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_MY_AUTH_SERVER_JWK_SET_URI=http://auth-service:8086/oauth2/jwks
 
       - SPRING_MAIN_LAZY_INITIALIZATION=true
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
       interval: 30s
@@ -201,6 +222,10 @@ services:
     volumes:
       # - ./Backend/HotelServices/src/main/resources/static/images:/app/images
       - hotel-images:/app/images
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       # database connection
       - SPRING_DATASOURCE_URL=jdbc:postgresql://hotel-db:5432/hotelDB
@@ -217,7 +242,9 @@ services:
       - spring_cloud_config_retry_max=10
 
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-service:8086
+      - PROJECT_IMAGE=/app/images
       - SPRING_MAIN_LAZY_INITIALIZATION=true
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -262,6 +289,10 @@ services:
     build:
       context: ./Backend/RatingServices
       dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "8083:8083"
     environment:
@@ -276,6 +307,7 @@ services:
 
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-service:8086
       - SPRING_MAIN_LAZY_INITIALIZATION=true
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
@@ -321,6 +353,10 @@ services:
     build:
       context: ./Backend/UserService
       dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "8081:8081"
     volumes:
@@ -345,6 +381,7 @@ services:
       # Tell Spring Boot where to look for images inside the container
       - PROJECT_IMAGE=/app/images
       - SPRING_MAIN_LAZY_INITIALIZATION=true
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s

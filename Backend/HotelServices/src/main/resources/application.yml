@@ -24,7 +24,7 @@ server:
   port: 8082
 
 project:
-  image: "C:/Users/hp/git/repository-micro/Backend/HotelServices/src/main/resources/static/images"
+  image: ${PROJECT_IMAGE:/app/images}
 
 #management:
 #  endpoints:
