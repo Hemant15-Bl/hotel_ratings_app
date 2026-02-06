@@ -9,12 +9,13 @@ services:
       - "8761:8761"
     environment:
       - spring_profiles_active=docker
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 180s
     networks:
       - rating-net
   
@@ -31,6 +32,7 @@ services:
       - spring_cloud_config_server_git_uri=https://github.com/Hemant15-Bl/Config
       - eureka_client_serviceUrl_defaultZone=http://discovery-service:8761/eureka/
       - eureka_instance_hostname=config-server
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 10s
@@ -101,12 +103,14 @@ services:
       - spring_cloud_config_retry_max-attempts=10
       # setting oauth2.O env.
       - SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER=http://auth-service:8086
+
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
-      interval: 20s
+      interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 150s
+      start_period: 180s
     depends_on:
       auth-db:
         condition: service_healthy
@@ -144,12 +148,14 @@ services:
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_MY_AUTH_SERVER_AUTHORIZATION_URI=http://localhost:8086/oauth2/authorize
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_MY_AUTH_SERVER_TOKEN_URI=http://auth-service:8086/oauth2/token
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_MY_AUTH_SERVER_JWK_SET_URI=http://auth-service:8086/oauth2/jwks
+
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
-      interval: 20s
+      interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 150s
+      start_period: 180s
     depends_on:
       redis:
         condition: service_healthy
@@ -211,12 +217,13 @@ services:
       - spring_cloud_config_retry_max=10
 
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-service:8086
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
-      interval: 20s
+      interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 150s
+      start_period: 180s
     depends_on:
       hotel-db:
         condition: service_healthy
@@ -268,12 +275,13 @@ services:
       - spring_cloud_config_retry_max=10
 
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-service:8086
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
-      interval: 20s
+      interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 150s
+      start_period: 180s
     depends_on:
       rating-db:
         condition: service_healthy
@@ -336,12 +344,13 @@ services:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-service:8086
       # Tell Spring Boot where to look for images inside the container
       - PROJECT_IMAGE=/app/images
+      - SPRING_MAIN_LAZY_INITIALIZATION=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
-      interval: 20s
+      interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 150s
+      start_period: 180s
     depends_on:
       user-db:
         condition: service_healthy
