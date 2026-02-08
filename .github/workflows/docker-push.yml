@@ -26,9 +26,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build all JARs first
+      # Build all JARs by pointing to each specific pom.xml
       - name: Build JAR files
-        run: mvn clean package -DskipTests
+        run: |
+          mvn clean package -DskipTests -f Backend/ConfigServer/pom.xml
+          mvn clean package -DskipTests -f Backend/ServiceRegistry/pom.xml
+          mvn clean package -DskipTests -f Backend/AuthServer/pom.xml
+          mvn clean package -DskipTests -f Backend/APIGateway/pom.xml
+          mvn clean package -DskipTests -f Backend/HotelServices/pom.xml
+          mvn clean package -DskipTests -f Backend/RatingServices/pom.xml
+          mvn clean package -DskipTests -f Backend/UserService/pom.xml
 
       # Build and Push Config Server
       - name: Build and Push Config Server
@@ -47,7 +54,7 @@ jobs:
           tags: hemantbarole/micro-service-registry:latest
 
       # Build and Push auth Service
-      - name: Build and Push Discovery
+      - name: Build and Push Auth
         uses: docker/build-push-action@v5
         with:
           context: ./Backend/AuthServer
@@ -55,7 +62,7 @@ jobs:
           tags: hemantbarole/micro-auth-server:latest
       
       # Build and Push apigateway Service
-      - name: Build and Push Discovery
+      - name: Build and Push Gateway
         uses: docker/build-push-action@v5
         with:
           context: ./Backend/APIGateway
@@ -63,7 +70,7 @@ jobs:
           tags: hemantbarole/micro-apigateway-service:latest
       
       # Build and Push hotel Service
-      - name: Build and Push Discovery
+      - name: Build and Push Hotel
         uses: docker/build-push-action@v5
         with:
           context: ./Backend/HotelServices
@@ -71,7 +78,7 @@ jobs:
           tags: hemantbarole/micro-hotel-service:latest
       
      # Build and Push rating Service
-      - name: Build and Push Discovery
+      - name: Build and Push Rating
         uses: docker/build-push-action@v5
         with:
           context: ./Backend/RatingServices
@@ -79,7 +86,7 @@ jobs:
           tags: hemantbarole/micro-rating-service:latest
       
        # Build and Push user Service
-      - name: Build and Push Discovery
+      - name: Build and Push User
         uses: docker/build-push-action@v5
         with:
           context: ./Backend/UserService
