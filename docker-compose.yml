@@ -2,6 +2,8 @@ services:
   # 1. Infrastructure: Service-Registry
   discovery-service:
     image: hemantbarole/micro-service-registry:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/ServiceRegistry
       dockerfile: Dockerfile
@@ -27,6 +29,8 @@ services:
   # 2. Infrastructure: Config-Server
   config-server:
     image: hemantbarole/micro-config-server:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/ConfigServer
       dockerfile: Dockerfile
@@ -93,6 +97,8 @@ services:
 
   auth-service:
     image: hemantbarole/micro-auth-server:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/AuthServer
       dockerfile: Dockerfile
@@ -140,6 +146,8 @@ services:
   # 5. Core Service: APIGateway-Service
   apigateway-service:
     image: hemantbarole/micro-apigateway-service:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/APIGateway
       dockerfile: Dockerfile
@@ -214,6 +222,8 @@ services:
   
   hotel-service:
     image: hemantbarole/micro-hotel-service:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/HotelServices
       dockerfile: Dockerfile
@@ -286,6 +296,8 @@ services:
   
   rating-service:
     image: hemantbarole/micro-rating-service:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/RatingServices
       dockerfile: Dockerfile
@@ -350,6 +362,8 @@ services:
   
   user-service:
     image: hemantbarole/micro-user-service:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./Backend/UserService
       dockerfile: Dockerfile
@@ -405,6 +419,8 @@ services:
   # 7. Frontend: React Application
   frontend:
     image: hemantbarole/micro-frontend:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -417,7 +433,20 @@ services:
         condition: service_healthy
     networks:
       - rating-net
-
+  
+  # 8. WatchTower: Automated Deployment
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_LABEL_ENABLE=true
+    restart: always
+    networks:
+      - rating-net
 
   # This tell docker to create persistent storage on host machine
 volumes:
