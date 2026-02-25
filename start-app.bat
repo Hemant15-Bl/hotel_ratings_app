@@ -1,7 +1,7 @@
 @echo off
 echo [1/4] Starting core infrastructure (DBs, Redis, Eureka)...
 :: Start the small ones first
-docker-compose up -d discovery-service redis auth-db hotel-db rating-db user-db
+docker-compose up -d discovery-service redis auth-db hotel-db rating-db user-db watchtower
 timeout /t 30 /nobreak > nul
 
 echo [2/4] Starting Config Server...
