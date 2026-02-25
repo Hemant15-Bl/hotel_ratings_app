@@ -90,7 +90,7 @@ const AdminHome = () => {
     );
   });
 
-  if (user.loading || loading) {
+  if (loading) {
     return (
       <div className='d-flex flex-column justify-content-center align-items-center' style={{ height: '100vh', width: '100vw' }}>
         <Spinner color="info" style={{ width: '3rem', height: '3rem' }}>...</Spinner>
