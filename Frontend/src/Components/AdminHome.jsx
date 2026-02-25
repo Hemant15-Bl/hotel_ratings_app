@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Button, Card, CardBody, CardTitle, Col, Container, Input, InputGroup, Row, Table } from 'reactstrap';
+import { Button, Card, CardBody, CardTitle, Col, Container, Input, InputGroup, Row, Spinner, Table } from 'reactstrap';
 import { getAllHotels } from '../services/Hotel-service';
 import { loadAllUsers } from '../services/User-service';
 import { toast } from 'react-toastify';
@@ -14,6 +14,8 @@ import Ratings from './Ratings';
 import "./admin.css";
 
 const AdminHome = () => {
+
+  const [loading, setLoading] = useState(true);
 
   //-------------- component rendering ----------------------
   const { section } = useParams();
@@ -33,6 +35,7 @@ const AdminHome = () => {
     document.title = "HRS | Dashboard";
 
     const loadData = async () => {
+      setLoading(true);
       try {
         const [hotelsData, UsersData, ratingsData, activitiesData] = await Promise.all([getAllHotels(), loadAllUsers(), getAllRatings(), getActivities()]);
 
@@ -45,6 +48,8 @@ const AdminHome = () => {
       } catch (error) {
         toast.error("Failed to load dashboard data!!")
         console.error(error);
+      }finally{
+        setLoading(false);
       }
     };
 
@@ -85,7 +90,16 @@ const AdminHome = () => {
     );
   });
 
-  if(user.loading) return <div className='d-flex justify-content-center mt-5'> <h4> Please Wait Synchronizing Data...</h4> <Spinner>...</Spinner> </div>;
+  if (user.loading || loading) {
+    return (
+      <div className='d-flex flex-column justify-content-center align-items-center' style={{ height: '100vh', width: '100vw' }}>
+        <Spinner color="info" style={{ width: '3rem', height: '3rem' }}>...</Spinner>
+        <h4 className='mt-3 text-muted animate__animated animate__pulse animate__infinite'>
+          Please Wait Synchronizing with Data...
+        </h4>
+      </div>
+    );
+  }
   return (
 
     <div className='d-flex' style={{ minHeight: '100vh', width: '100vw' }}>
