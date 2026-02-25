@@ -92,3 +92,11 @@ jobs:
           context: ./Backend/UserService
           push: true
           tags: hemantbarole/micro-user-service:latest
+      
+      # Build and Push Frontend
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Frontend  # Make sure this matches your folder name!
+          push: true
+          tags: hemantbarole/micro-frontend:latest
