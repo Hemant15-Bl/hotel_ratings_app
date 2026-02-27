@@ -12,10 +12,14 @@ function UserProvider({ children }) {
 
     useEffect(() => {
 
-        const token = localStorage.getItem("access_token");
+        // const token = localStorage.getItem("access_token");
 
-        if (!token) {
-            setUser((prev) => ({ ...prev, loading: false }));
+        // if (!token) {
+        //     setUser((prev) => ({ ...prev, loading: false }));
+        //     return;
+        // }
+
+        if(!user.login){
             return;
         }
 
@@ -25,8 +29,8 @@ function UserProvider({ children }) {
             setUser({ data: userData, login: true, loading: false });
 
         }).catch(err => {
-            console.log("Session is expire or invalid token!!");
-            localStorage.removeItem("access_token");
+            console.log("No Active Session Found!");
+            // localStorage.removeItem("access_token");
             setUser({ data: null, login: false, loading: true });
         })
     }, []);

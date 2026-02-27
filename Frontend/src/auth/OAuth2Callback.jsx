@@ -11,12 +11,12 @@ const OAuth2Callback = () => {
     const { setUser } = useContext(UserContext);
 
     useEffect(() =>{
-        const param = new URLSearchParams(window.location.hash.replace('#', '?'));
-        const token = param.get("access_token");
+        // const param = new URLSearchParams(window.location.hash.replace('#', '?'));
+        // const token = param.get("access_token");
 
-        if (token) {
-            localStorage.setItem("access_token", token);
-        }
+        // if (token) {
+        //     localStorage.setItem("access_token", token);
+        // }
 
         //-------- load user details from database
         loadUserByAuth().then(userData =>{
@@ -34,6 +34,7 @@ const OAuth2Callback = () => {
             }
 
         }).catch(err =>{
+            console.log("Session expired or invalid token");
             console.log("Auth failed!!:", err);
             navigate("/");
         });

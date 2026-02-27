@@ -116,7 +116,7 @@ public class AuthSecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 			.cors(Customizer.withDefaults())
 			.requestCache(cache -> cache.requestCache(requestCache))
-			.authorizeHttpRequests(auth -> auth.requestMatchers("/login", "/api/v4/auth/signup", "/error", "/actuator/**", "/favicon.ico", "/.well.known/appspecific/**")
+			.authorizeHttpRequests(auth -> auth.requestMatchers("/login", "/api/v4/auth/signup", "/error", "/actuator/**", "/favicon.ico", "/.well-known/**")
 												.permitAll()
 												.requestMatchers(HttpMethod.POST, "/api/v4/auth/admin/create-user").hasRole("ADMIN")
 												.requestMatchers("/api/v4/me").authenticated()

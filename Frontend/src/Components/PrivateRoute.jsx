@@ -7,13 +7,13 @@ const PrivateRoute = () => {
 
   const {user} = useContext(UserContext);
 
-  const token = localStorage.getItem("access_token");
+  // const token = localStorage.getItem("access_token");
 
   if (user.loading) {
     return (<div className='d-flex justify-content-center py-5'><h4>Loading Session...</h4> <Spinner>...</Spinner></div>);
   }
 
-  return token ? <Outlet /> : <Navigate to={"/"} replace />
+  return user.login ? <Outlet /> : <Navigate to={"/"} replace />
 }
 
 export default PrivateRoute;

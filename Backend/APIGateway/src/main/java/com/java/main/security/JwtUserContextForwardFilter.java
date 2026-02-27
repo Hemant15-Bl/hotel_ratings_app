@@ -1,9 +1,13 @@
 package com.java.main.security;
 
+import java.util.stream.Collectors;
+
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -41,9 +45,14 @@ public class JwtUserContextForwardFilter implements GlobalFilter, Ordered{
 		                
 		                // Example of extraction:
 		                String userId = jwt.getSubject(); 
+		                String tokenValue = jwt.getTokenValue();
+		                
+		                String authorities = auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 		                
 		                ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
 		                    .header("X-Auth-User-Id", userId)
+		                    .header("X-Auth-User-Roles", authorities)
+		                    .header(HttpHeaders.AUTHORIZATION, "Bearer "+tokenValue)
 		                    .build();
 		                
 		                return chain.filter(exchange.mutate().request(modifiedRequest).build());
