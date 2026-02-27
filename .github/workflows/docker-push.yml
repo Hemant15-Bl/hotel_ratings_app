@@ -29,13 +29,13 @@ jobs:
       # Build all JARs by pointing to each specific pom.xml
       - name: Build JAR files
         run: |
-          mvn clean package -DskipTests -f Backend/ConfigServer/pom.xml
-          mvn clean package -DskipTests -f Backend/ServiceRegistry/pom.xml
-          mvn clean package -DskipTests -f Backend/AuthServer/pom.xml
-          mvn clean package -DskipTests -f Backend/APIGateway/pom.xml
-          mvn clean package -DskipTests -f Backend/HotelServices/pom.xml
-          mvn clean package -DskipTests -f Backend/RatingServices/pom.xml
-          mvn clean package -DskipTests -f Backend/UserService/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/ConfigServer/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/ServiceRegistry/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/AuthServer/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/APIGateway/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/HotelServices/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/RatingServices/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/UserService/pom.xml
 
       # Build and Push Config Server
       - name: Build and Push Config Server
