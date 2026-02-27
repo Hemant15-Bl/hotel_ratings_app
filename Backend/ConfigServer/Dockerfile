@@ -10,4 +10,4 @@ COPY target/*.jar app.jar
 
 EXPOSE 8085
 
-ENTRYPOINT [ "java", "-jar", "app.jar"]
+ENTRYPOINT [ "java", "-XX:TieredStopAtLevel=1", "-noverify", "-jar", "app.jar"]
