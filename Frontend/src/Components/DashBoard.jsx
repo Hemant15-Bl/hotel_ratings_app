@@ -4,18 +4,28 @@ import Base from './Base';
 import { getAllHotels } from '../services/Hotel-service';
 import { Button, Container, Input, InputGroup, Row, Spinner } from 'reactstrap';
 import UserContext from '../Context/UserContext';
+import { toast } from 'react-toastify';
+import HotelShimmer from './HotelShimmer';
 
 const DashBoard = () => {
 
   const [hotels, setHotels] = useState([]);
   const [ratings, setRatings] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const { user } = useContext(UserContext);
 
   useEffect(() => {
-    getAllHotels().then(data => setHotels(data))
+    setIsLoading(true);
+    try {
+      getAllHotels().then(data => {setHotels(data); isLoading(false);})
       .catch(err => console.error("Error Loading All Hotels: ", err));
+    } catch (error) {
+      toast.error("Something went wrong! Try again!!");
+      setIsLoading(false);
+    }
+    
   }, []);
 
   const filterHotels = hotels.filter((hotel) => {
@@ -51,12 +61,13 @@ const DashBoard = () => {
       <Container>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className='fw-bold' style={{ color: '#2c3e50' }}>Featured Hotels</h2>
-          <span className='text-muted'>{filterHotels.length} hotels found</span>
+          {!isLoading && <span className='text-muted'>{filterHotels.length} hotels found</span>}
         </div>
 
         <Row>
 
-          {filterHotels.length > 0 ? filterHotels.map(hotel => { return (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />) }
+          {isLoading ? (Array(6).fill(0).map((_, i)=> <HotelShimmer key={i} />))
+           : filterHotels.length > 0 ? (filterHotels.map(hotel => (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />) )
           ) : (
             <div className="text-center w-100 py-5">
               <img src="https://cdn-icons-png.flaticon.com/512/6134/6134065.png" alt="not found" style={{ width: '100px', opacity: 0.5 }} />
