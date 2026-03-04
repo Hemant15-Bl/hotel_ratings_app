@@ -19,13 +19,16 @@ const DashBoard = () => {
   useEffect(() => {
     setIsLoading(true);
     try {
-      getAllHotels().then(data => {setHotels(data); isLoading(false);})
-      .catch(err => console.error("Error Loading All Hotels: ", err));
+      getAllHotels().then(data => {
+        setHotels(data);
+        setIsLoading(false);
+      })
+        .catch(err => console.error("Error Loading All Hotels: ", err));
     } catch (error) {
       toast.error("Something went wrong! Try again!!");
       setIsLoading(false);
     }
-    
+
   }, []);
 
   const filterHotels = hotels.filter((hotel) => {
@@ -66,15 +69,15 @@ const DashBoard = () => {
 
         <Row>
 
-          {isLoading ? (Array(6).fill(0).map((_, i)=> <HotelShimmer key={i} />))
-           : filterHotels.length > 0 ? (filterHotels.map(hotel => {return (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />)} )
-          ) : (
-            <div className="text-center w-100 py-5">
-              <img src="https://cdn-icons-png.flaticon.com/512/6134/6134065.png" alt="not found" style={{ width: '100px', opacity: 0.5 }} />
-              <h3 className="text-muted mt-3">No hotels match your search "{searchTerm}"</h3>
-              <Button color="link" onClick={() => setSearchTerm("")}>Clear all filters</Button>
-            </div>
-          )}
+          {isLoading ? (Array(6).fill(0).map((_, i) => <HotelShimmer key={i} />))
+            : filterHotels.length > 0 ? (filterHotels.map(hotel => { return (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />) })
+            ) : (
+              <div className="text-center w-100 py-5">
+                <img src="https://cdn-icons-png.flaticon.com/512/6134/6134065.png" alt="not found" style={{ width: '100px', opacity: 0.5 }} />
+                <h3 className="text-muted mt-3">No hotels match your search "{searchTerm}"</h3>
+                <Button color="link" onClick={() => setSearchTerm("")}>Clear all filters</Button>
+              </div>
+            )}
 
         </Row>
       </Container>
