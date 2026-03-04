@@ -67,7 +67,7 @@ const DashBoard = () => {
         <Row>
 
           {isLoading ? (Array(6).fill(0).map((_, i)=> <HotelShimmer key={i} />))
-           : filterHotels.length > 0 ? (filterHotels.map(hotel => (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />) )
+           : filterHotels.length > 0 ? (filterHotels.map(hotel => {return (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />)} )
           ) : (
             <div className="text-center w-100 py-5">
               <img src="https://cdn-icons-png.flaticon.com/512/6134/6134065.png" alt="not found" style={{ width: '100px', opacity: 0.5 }} />
