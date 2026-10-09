@@ -86,7 +86,7 @@ jobs:
           tags: hemantbarole/micro-rating-service:latest
       
       # Build and Push chatbot Service
-      - name: Build and Push Rating
+      - name: Build and Push Chatbot
         uses: docker/build-push-action@v5
         with:
           context: ./Backend/ChatbotService
