@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: CHATBOT-SERVICE
+
+  config:
+    import: optional:configserver:http://localhost:8085
+
+  ai:
+    ollama:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: never
+      chat:
+        options:
+          model: llama3.2
+          temperature: 0.1
+      embedding:
+          model: nomic-embed-text
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        dimensions: 768        # nomic-embed-text
+
+  datasource:
+    url: ${CHATBOT_DB_URL:jdbc:postgresql://localhost:5434/chatbot}
+    username: postgres
+    password: root
+
+server:
+  port: 8087
+
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
+#    org.springframework.security.oauth2: DEBUG

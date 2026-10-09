@@ -3,7 +3,7 @@ name: Build and Push to Docker Hub
 on:
   push:
     branches: [ "master" ] # Triggers whenever push to main
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -84,6 +84,14 @@ jobs:
           context: ./Backend/RatingServices
           push: true
           tags: hemantbarole/micro-rating-service:latest
+      
+      # Build and Push chatbot Service
+      - name: Build and Push Rating
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Backend/ChatbotService
+          push: true
+          tags: hemantbarole/micro-chatbot-service:latest
       
        # Build and Push user Service
       - name: Build and Push User

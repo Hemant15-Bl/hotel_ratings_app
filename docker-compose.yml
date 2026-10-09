@@ -339,6 +339,76 @@ services:
       - rating-net
   # --------------- Rating End --------------------------
 
+
+  # --------------- Chatbot-Service --------------------------
+  pgvector-db:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector-db
+    environment:
+      POSTGRES_DB: chatbot
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgvector-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d chatbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rating-net
+
+  chatbot-service:
+    image: hemantbarole/micro-chatbot-service:latest
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    build:
+      context: ./Backend/ChatbotService
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    ports:
+      - "8087:8087"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - spring_profiles_active=docker
+      - eureka_client_serviceUrl_defaultZone=http://discovery-service:8761/eureka/
+      - spring_config_import=optional:configserver:http://config-server:8085
+      - spring_cloud_config_fail=false
+      - spring_cloud_config_retry_max=10
+      # Ollama runs on the Windows host, not in Docker
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://pgvector-db:5432/chatbot
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - JAVA_TOOL_OPTIONS=-XX:+UseSerialGC -Xss512k -XX:MaxRAMPercentage=75.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    depends_on:
+      pgvector-db:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      hotel-service:
+        condition: service_healthy
+      rating-service:
+        condition: service_healthy
+    networks:
+      - rating-net
+  # --------------- Chatbot End --------------------------
+
+
   # --------------- User-Service --------------------------
   user-db:
     image: mysql:8.0
