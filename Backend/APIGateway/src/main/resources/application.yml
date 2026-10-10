@@ -47,6 +47,11 @@ spring:
           predicates:
             - Path=/api/v3/rating/**
 
+        - id: CHATBOT-SERVICE
+          uri: lb://CHATBOT-SERVICE
+          predicates:
+            - Path=/chat/**
+
 # ------------ caching strategy
   data:
     redis:

@@ -26,6 +26,12 @@ spring:
     username: postgres
     password: root
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8086
+
 server:
   port: 8087
 
