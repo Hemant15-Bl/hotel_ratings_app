@@ -527,6 +527,7 @@ volumes:
   redis-data:
   hotel-images:
   user-images:
+  pgvector-db-data:
 
 networks:
   rating-net:
