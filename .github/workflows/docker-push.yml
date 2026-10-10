@@ -36,6 +36,7 @@ jobs:
           mvn clean package -DskipTests -T 1C -f Backend/HotelServices/pom.xml
           mvn clean package -DskipTests -T 1C -f Backend/RatingServices/pom.xml
           mvn clean package -DskipTests -T 1C -f Backend/UserService/pom.xml
+          mvn clean package -DskipTests -T 1C -f Backend/ChatbotService/pom.xml
 
       # Build and Push Config Server
       - name: Build and Push Config Server
