@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import './App.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -16,6 +16,8 @@ import AddHotel from './Components/AddHotel';
 import UpdateUser from './Components/UpdateUser';
 import AdminHome from './Components/AdminHome';
 import OAuth2Callback from './auth/OAuth2Callback';
+import UserContext from './Context/UserContext';
+import ChatWidget from './Components/ChatWidget';
 
 
 function App() {
@@ -23,6 +25,11 @@ function App() {
   useEffect(() => {
     document.title = "HRS | Hotel-Rating-System";
   }, []);
+
+  function ChatGate() {
+  const { user } = useContext(UserContext);
+  return user?.login === true ? <ChatWidget /> : null;
+}
 
   const router = createBrowserRouter([
 
@@ -75,6 +82,7 @@ function App() {
     <div>
       <ToastContainer />
       <RouterProvider router={router} />
+      <ChatGate />
     </div>
 
   )
