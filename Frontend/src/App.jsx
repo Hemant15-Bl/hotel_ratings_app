@@ -20,16 +20,16 @@ import UserContext from './Context/UserContext';
 import ChatWidget from './Components/ChatWidget';
 
 
+ function ChatGate() {
+  const { user } = useContext(UserContext);
+  return user?.login === true ? <ChatWidget /> : null;
+}
+
 function App() {
 
   useEffect(() => {
     document.title = "HRS | Hotel-Rating-System";
   }, []);
-
-  function ChatGate() {
-  const { user } = useContext(UserContext);
-  return user?.login === true ? <ChatWidget /> : null;
-}
 
   const router = createBrowserRouter([
 
