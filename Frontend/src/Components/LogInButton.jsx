@@ -7,7 +7,7 @@ const LogInButton = () => {
         window.location.href = "http://localhost:8084/oauth2/authorization/my-gateway-client";
     }
   return (
-    <Button onClick={handleLoginOauth2} className='px-5 mb-2 text-white' color='info ' >Sign In</Button>
+    <Button onClick={handleLoginOauth2} className='px-5 mb-2 text-white' color='info' >Sign In</Button>
   )
 }
 
