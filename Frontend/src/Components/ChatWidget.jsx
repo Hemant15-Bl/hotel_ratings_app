@@ -71,7 +71,7 @@ const ChatWidget = () => {
   }, [open]);
 
 
-  const send = async () => {
+  const send = async (raw) => {
     const text = (raw ?? input).trim();
     if (!text || loading) return;
 
