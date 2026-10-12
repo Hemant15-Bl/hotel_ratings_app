@@ -11,9 +11,11 @@ spring:
       init:
         pull-model-strategy: never
       chat:
-        options:
-          model: llama3.2
-          temperature: 0.1
+        model: llama3.2
+        temperature: 0.1
+        num-predict: 400
+        keep-alive: 30m
+          
       embedding:
           model: nomic-embed-text
     vectorstore:
@@ -23,7 +25,7 @@ spring:
 
   datasource:
     url: ${CHATBOT_DB_URL:jdbc:postgresql://localhost:5434/chatbot}
-    username: postgres
+    username: root
     password: root
 
   security:

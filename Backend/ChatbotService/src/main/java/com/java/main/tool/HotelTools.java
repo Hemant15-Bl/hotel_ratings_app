@@ -55,4 +55,12 @@ public class HotelTools {
 		        .filter(s -> s.name().toLowerCase().contains(hotelName.toLowerCase()))
 		        .toList();
 		  }
+		  
+		  @Tool(description = "Get the single best hotel (highest average rating) with its average rating out of 10 and review count.")
+		  HotelSummary getTopRatedHotel() {
+		      return summaries().stream()
+		          .filter(s -> s.reviewCount() > 0)
+		          .max(Comparator.comparingDouble(HotelSummary::averageRating))
+		          .orElse(null);
+		  }
 }
