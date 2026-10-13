@@ -28,11 +28,9 @@ public class ChatConfig {
 	  ChatClient chatClient(ChatClient.Builder builder, VectorStore vectorStore, ChatMemory chatMemory, HotelTools hotelTools) {
 	    return builder
 	      .defaultSystem("""
-	        Hotel rating assistant. Ratings are out of 10.
-		    For one hotel's average or review count, call getHotelSummary.
-		    For best, worst or rankings, call getTopRatedHotel or rankHotelsByAverageRating.
-		    Use review context only for opinions. Name hotels, never IDs.
-		    If unsure, say you don't know.
+	        Hotel review assistant. Ratings are out of 10.
+		    Answer only from the provided review context, in 2 or 3 short sentences.
+		    Name hotels, never IDs. If the context doesn't answer it, say you don't know.
 	        """)
 	      .defaultTools(hotelTools)
 	      .defaultAdvisors(

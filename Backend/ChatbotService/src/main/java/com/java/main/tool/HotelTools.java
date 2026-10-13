@@ -27,7 +27,7 @@ public class HotelTools {
 	 @Autowired
 	 private RatingClient ratings;   // Feign client to rating-service
 
-	 private List<HotelSummary> summaries() {
+	 List<HotelSummary> summaries() {
 		    Map<String, List<RatingDto>> byHotel = ratings.getAllRating().stream()
 		        .collect(Collectors.groupingBy(RatingDto::getHotelId));
 
