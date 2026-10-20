@@ -6,36 +6,66 @@ import { Button, Container, Input, InputGroup, Row, Spinner } from 'reactstrap';
 import UserContext from '../Context/UserContext';
 import { toast } from 'react-toastify';
 import HotelShimmer from './HotelShimmer';
+import { getHotelRatingSummary } from '../services/Rating-service';
+
+// Loads the average rating of every hotel: { [hotelId]: { status, average, count } }
+// One hotel failing only affects that hotel's badge.
+const loadRatings = async (hotelList) => {
+  const results = await Promise.allSettled(
+    hotelList.map(h => getHotelRatingSummary(h.hotelId))
+  );
+
+  const map = {};
+  results.forEach((res, i) => {
+    map[hotelList[i].hotelId] = res.status === 'fulfilled'
+      ? res.value
+      : { status: 'error', average: null, count: 0 };
+  });
+  return map;
+};
 
 const DashBoard = () => {
 
   const [hotels, setHotels] = useState([]);
-  const [ratings, setRatings] = useState([]);
+  const [ratingMap, setRatingMap] = useState(null);        // null = ratings still loading
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   const { user } = useContext(UserContext);
 
   useEffect(() => {
+    let active = true;
     setIsLoading(true);
-    try {
-      getAllHotels().then(data => {
-        setHotels(data);
-        setIsLoading(false);
-      })
-        .catch(err => console.error("Error Loading All Hotels: ", err));
-    } catch (error) {
-      toast.error("Something went wrong! Try again!!");
+
+    getAllHotels().then(data => {
+      if (!active) return;
+      setHotels(data);
       setIsLoading(false);
-    }
+
+      // Hotels are on screen now; fill in the ratings
+      loadRatings(data).then(map => { if (active) setRatingMap(map); });
+    })
+      .catch(err => {
+        console.error("Error Loading All Hotels: ", err)
+        toast.error("Something went wrong! Try again!!");
+        if (active) setIsLoading(false);
+      });
+
+    return () => { active = false; };
 
   }, []);
+
+// The rating object each card needs
+  const ratingFor = (hotelId) => {
+    if (!ratingMap) return { status: 'loading', average: null, count: 0 };
+    return ratingMap[hotelId] ?? { status: 'error', average: null, count: 0 };
+  };
 
   const filterHotels = hotels.filter((hotel) => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      hotel.name.toLowerCase().includes(searchLower) ||
-      hotel.location.toLowerCase().includes(searchLower)
+      (hotel.name ?? "").toLowerCase().includes(searchLower) ||
+      (hotel.location ?? "").toLowerCase().includes(searchLower)
     );
   });
 
@@ -70,7 +100,14 @@ const DashBoard = () => {
         <Row>
 
           {isLoading ? (Array(6).fill(0).map((_, i) => <HotelShimmer key={i} />))
-            : filterHotels.length > 0 ? (filterHotels.map(hotel => { return (<Hotel hotel={hotel} userId={user.data?.userId} key={hotel.hotelId} />) })
+            : filterHotels.length > 0 ? (filterHotels.map(hotel => (
+              <Hotel
+                hotel={hotel}
+                userId={user?.data?.userId}
+                rating={ratingFor(hotel.hotelId)}
+                key={hotel.hotelId}
+              />
+            ))
             ) : (
               <div className="text-center w-100 py-5">
                 <img src="https://cdn-icons-png.flaticon.com/512/6134/6134065.png" alt="not found" style={{ width: '100px', opacity: 0.5 }} />

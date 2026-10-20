@@ -69,3 +69,21 @@ export const deleteRating = async (ratingId) =>{
     }
 };
 
+/**
+* New: Average rating and review count for hotel
+* Return { status: 'ready', average: count} (average is null when there is no reviews)
+* Throws when the rating service is down( like fallback no real rating)
+**/
+export const getHotelRatingSummary = async (hotelId)=>{
+    const list = await getRatingsByHotelId(hotelId);
+    const all = Array.isArray(list) ? list : [] ;
+    const real = all.filter( r => !String(r.ratingId).startsWith("FALLBACK"));
+
+    if(all.length > 0 && real === 0){
+        throw new Error("Rating service unavailable");
+    }
+    
+    const count = real.length;
+    const total = real.reduce((sum, r) => sum + Number(r.rating || 0), 0);
+    return {status: 'ready', average: count> 0 ? total / count : null, count}
+};
