@@ -10,7 +10,7 @@ const OAuth2Callback = () => {
     const navigate = useNavigate();
     const { setUser } = useContext(UserContext);
 
-    useEffect(() =>{
+    useEffect(() => {
         // const param = new URLSearchParams(window.location.hash.replace('#', '?'));
         // const token = param.get("access_token");
 
@@ -19,29 +19,40 @@ const OAuth2Callback = () => {
         // }
 
         //-------- load user details from database
-        loadUserByAuth().then(userData =>{
-           
+        loadUserByAuth().then(userData => {
+
             //setting user data in provider
-            setUser({data: userData, login: true, loading: false});
+            setUser({ data: userData, login: true, loading: false });
 
             // redirect with role (ROLE BASED ACCESS CONTROL)
             const isAdmin = userData.roles?.some(role => role.name === "ROLE_ADMIN");
 
             if (isAdmin) {
                 navigate("/admin/dashboard");
-            }else{
+            } else {
                 navigate("/user/dashboard");
             }
 
-        }).catch(err =>{
+        }).catch(err => {
             console.log("Session expired or invalid token");
             console.log("Auth failed!!:", err);
             navigate("/");
         });
-    },[navigate]);
+    }, [navigate]);
     return (
-        <div className='d-flex justify-content-center mt-5'><h4>Logging in...</h4>
-        <Spinner />
+        <div
+            className='d-flex flex-column align-items-center justify-content-center text-center'
+            style={{ minHeight: '100vh', gap: '1rem', backgroundColor: '#f5f7f8' }}
+            role='status'
+            aria-live='polite'
+        >
+            <Spinner style={{ width: '3rem', height: '3rem', color: '#0fabca' }}>
+                <span className='visually-hidden'>Loading</span>
+            </Spinner>
+
+            <p className='text-muted mb-0'>
+                Just a moment...
+            </p>
         </div>
     )
 }
