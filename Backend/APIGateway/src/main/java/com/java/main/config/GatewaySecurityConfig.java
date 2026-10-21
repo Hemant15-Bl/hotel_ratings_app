@@ -40,6 +40,9 @@ public class GatewaySecurityConfig {
 	
 	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
 	private String issuerUri;
+	
+	@Value("${app.auth-public-url:http://localhost:8086}")
+	private String authPublicUrl;   // the URL the BROWSER uses for the auth server
 
 	//------------ providing endpoints and authenticate them ------------------------------------------------------------
 	@Bean
@@ -97,7 +100,7 @@ public class GatewaySecurityConfig {
 									// 1. Access Token Cookie
 									response.addCookie(ResponseCookie.from("AUTH_TOKEN", accessToken)
 																	.httpOnly(true)
-																	.secure(true) // when local machine 'false'
+																	.secure(false) // when local machine 'false'
 																	.path("/")
 																	.sameSite("Lax")
 																	.build());
@@ -105,7 +108,7 @@ public class GatewaySecurityConfig {
 									// 2. Refresh Token Cookie
 									response.addCookie(ResponseCookie.from("REFRESH_TOKEN", refreshToken)
 											.httpOnly(true)
-											.secure(true) // when local machine 'false'
+											.secure(false) // when local machine 'false'
 											.path("/")
 											.maxAge(Duration.ofDays(1))
 											.sameSite("Lax")
@@ -129,6 +132,16 @@ public class GatewaySecurityConfig {
 	// ---------------------------------------------------------------------------------------------------------
 
 	//---------------- Logout and clear session cookies (logout + oidc + connect/logout) ----------------------
+	private ResponseCookie expired(String name) {
+	    return ResponseCookie.from(name, "")
+	            .path("/")
+	            .httpOnly(true)
+	            .secure(false)        // same attributes you used when creating them
+	            .sameSite("Lax")
+	            .maxAge(0)
+	            .build();
+	}
+	
 	@Bean
 	public ServerLogoutSuccessHandler oidcLogoutSuccessHandler() {
 		return (exchange, authentication) ->{
@@ -136,40 +149,14 @@ public class GatewaySecurityConfig {
 			ServerHttpResponse response = exchange.getExchange().getResponse();
 			
 			// Clearing Custom Session cookies
-			response.addCookie(ResponseCookie.from("AUTH_TOKEN", "")
-					.path("/")
-					.maxAge(0)
-					.build());
+			response.addCookie(expired("AUTH_TOKEN"));
 			
-			response.addCookie(ResponseCookie.from("REFRESH_TOKEN", "")
-					.path("/")
-					.maxAge(0)
-					.build()); 
+			response.addCookie(expired("REFRESH_TOKEN"));
+
 			
-			// Clearing Session Cookies
-			response.addCookie(ResponseCookie.from("JSESSIONID", "")
-					.path("/")
-					.maxAge(0)
-					.build());
 			
-			response.addCookie(ResponseCookie.from("SESSION", "")
-					.path("/")
-					.maxAge(0)
-					.build());
-			
-			if(authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
-				String idToken = oidcUser.getIdToken().getTokenValue();
-				String logoutUri = "http://localhost:8086/connect/logout"+
-								"?id_token_hint="+ idToken +
-								"&post_logout_redirect_uri=http://localhost:5173/";
-				response.setStatusCode(HttpStatus.FOUND);
-				response.getHeaders().setLocation(URI.create(logoutUri));
-				
-			}else {
-				response.setStatusCode(HttpStatus.FOUND);
-				response.getHeaders().setLocation(URI.create("http://localhost:5173/"));
-			}
-			
+			response.setStatusCode(HttpStatus.FOUND);
+	        response.getHeaders().setLocation(URI.create(authPublicUrl + "/logout"));
 			return response.setComplete();
 		};
 	}
