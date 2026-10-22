@@ -101,9 +101,9 @@ Once the containers are "Healthy" in Docker Desktop:
 ## User Panel
 ![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/landingPage.png?raw=true)
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Login.png?raw=true)
+![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Signin(H).jpeg?raw=true)
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Signup.png?raw=true)
+![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Signup(H).jpeg?raw=true)
 
 ![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Contact.png?raw=true)
 
