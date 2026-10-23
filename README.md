@@ -53,27 +53,27 @@ A distributed full-stack application built with a **microservices architecture**
 ## Architecture
 
 ```mermaid
-flowchart LR
-    Browser([Browser]) --> UI["React UI<br/>port 5173"]
-    UI -->|REST + session cookie| GW["API Gateway<br/>8084"]
+graph LR
+    Browser["Browser"] --> UI["React UI :5173"]
+    UI --> GW["API Gateway :8084"]
 
-    GW -->|OAuth2 login| AUTH["Auth Server<br/>8086"]
-    GW --> USER["User Service<br/>8081"]
-    GW --> HOTEL["Hotel Service<br/>8082"]
-    GW --> RATING["Rating Service<br/>8083"]
-    GW --> CHAT["Chatbot Service<br/>8087"]
-    GW -.->|rate limiting| REDIS[("Redis")]
+    GW --> AUTH["Auth Server :8086"]
+    GW --> USER["User Service :8081"]
+    GW --> HOTEL["Hotel Service :8082"]
+    GW --> RATING["Rating Service :8083"]
+    GW --> CHAT["Chatbot Service :8087"]
+    GW -.-> REDIS["Redis (rate limiting)"]
 
-    AUTH --> AUTHDB[("PostgreSQL<br/>auth")]
-    AUTH -->|Feign| USER
-    USER --> MYSQL[("MySQL")]
-    HOTEL --> HOTELDB[("PostgreSQL<br/>hotels")]
-    RATING --> MONGO[("MongoDB")]
+    AUTH --> AUTHDB["PostgreSQL (auth)"]
+    AUTH --> USER
+    USER --> MYSQL["MySQL"]
+    HOTEL --> HOTELDB["PostgreSQL (hotels)"]
+    RATING --> MONGO["MongoDB"]
 
-    CHAT -->|Feign| HOTEL
-    CHAT -->|Feign| RATING
-    CHAT --> VEC[("PostgreSQL<br/>+ pgvector")]
-    CHAT --> OLLAMA["Ollama<br/>llama3.2 + nomic-embed-text"]
+    CHAT --> HOTEL
+    CHAT --> RATING
+    CHAT --> VEC["PostgreSQL + pgvector"]
+    CHAT --> OLLAMA["Ollama (llama3.2, nomic-embed-text)"]
 ```
 
 Every service registers with **Eureka** and loads its configuration from the **Config Server**, which reads from a Git repository ([Hemant15-Bl/Config](https://github.com/Hemant15-Bl/Config)).
@@ -193,7 +193,7 @@ docker-compose up -d
 
 **Startup time**
 
-- **8 GB RAM systems:** the first boot can take **7-8 minutes**, because 8 or more JVMs start and run database migrations.
+- **8 GB RAM systems:** about **4-5 minutes** with the WSL memory settings from [Troubleshooting](#troubleshooting). Without them the first boot can take **8-9 minutes**, because 8 or more JVMs start and run database migrations.
 - **16 GB+ RAM systems:** expect about **2-3 minutes**.
 
 ### 3. Open the application
@@ -213,6 +213,31 @@ Once the containers show as healthy in Docker Desktop:
 - **Image pulls fail with TLS or timeout errors:** run `docker-compose pull` again, or pull images one at a time. Layers that already downloaded are kept.
 - **A service is missing in Eureka:** wait a few minutes. Services start in order and register as they become healthy.
 - **Chat requests are slow or time out:** check that Ollama is running, that both models are pulled, and that Docker has enough memory.
+- **Docker fails, containers restart or services are killed:** this is usually a memory problem. See [Docker runs out of memory](#docker-runs-out-of-memory-windows--wsl2) below.
+
+#### Docker runs out of memory (Windows / WSL2)
+
+Docker Desktop on Windows runs inside a WSL2 virtual machine. Without a limit, it can take memory from Windows until both slow down or fail. Setting explicit limits makes startup both more reliable and faster. On an 8 GB machine, this cut the first boot from about 8-9 minutes to about 4-5 minutes.
+
+1. Create or edit `%USERPROFILE%\.wslconfig`:
+
+   ```ini
+   [wsl2]
+   # Example values for an 8 GB machine: tune them for yours.
+   # Leave enough memory for Windows itself.
+   memory=5GB
+   processors=2
+   swap=2GB
+   
+   guiApplications=false
+
+   [experimental]
+   autoMemoryReclaim=dropcache
+   ```
+
+2. Apply it by running `wsl --shutdown`, then restart Docker Desktop.
+3. Check usage with `docker stats --no-stream`.
+4. While developing, stop the services you do not need, for example `docker-compose stop watchtower`.
 
 ---
 
