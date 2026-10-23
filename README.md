@@ -1,131 +1,352 @@
-# 🏨 Hotel Rating System
-Welcome to the Hotel Rating System. This is a distributed full-stack application built using a Microservices architecture. It allows users to discover hotels, manage bookings, and provide ratings through a modern React interface, secured by a dedicated OAuth2/JWT Authentication server.
+# Hotel Rating System
 
-# Microservices Architecture (OAuth2.O Authorization Flow) Block-Diagram
+![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x%20%7C%204.x-6DB33F?logo=springboot&logoColor=white)
+![Spring AI](https://img.shields.io/badge/Spring%20AI-2.0-6DB33F?logo=spring&logoColor=white)
+![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Screenshot%202026-01-02%20103702.png?raw=true)
+A distributed full-stack application built with a **microservices architecture**. Users can discover hotels, read and write reviews, and manage their profile through a React interface. Access is secured by a dedicated **OAuth2 / JWT authorization server**, and an **AI assistant** (Spring AI with a local LLM) answers questions about hotels and their reviews.
+
+<p align="center">
+  <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/landingPage.jpeg?raw=true" alt="Hotel Rating System landing page" width="85%">
+</p>
+
+## Table of contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [AI assistant (chatbot)](#ai-assistant-chatbot)
+- [Getting started](#getting-started)
+- [Configuration and security notes](#configuration-and-security-notes)
+- [Containerization](#containerization)
+- [Screenshots](#screenshots)
+- [Roadmap](#roadmap)
 
 ---
-## 📂 Project Structure
-The repository is organized into two main sections:
-- **/Backend:** Spring Boot microservices, security, and infrastructure.
-- **/Frontend:** React.js application for users and admins.
 
-```text
-hotel-ratings-app (root)
-├── backend/
-│   ├── service-registry/    # Eureka Server
-│   ├── config-server/       # Centralized Config
-│   ├── api-gateway/         # Routing & Auth Filter
-│   ├── auth-server/         # OAuth2.0 Logic
-│   ├── user-service/        # MySQL
-│   ├── hotel-service/       # PostgreSQL
-│   └── rating-service/      # MongoDB
-└── frontend/
-│   └── hotel-rating-ui/     # React.js
-├── docker-compose.yml  
-└── start-app.bat
+## Features
+
+**Users**
+- Browse hotels and search by name or location
+- View hotel details with ratings and reviews
+- Rate hotels and leave written feedback
+- View and edit a personal profile
+- Ask the AI assistant about hotels, ratings and guest reviews
+
+**Admins**
+- Add, edit and delete hotels, including hotel images
+- Manage users and ratings from a dedicated admin panel
+- Activity log of admin actions (for example user added or deleted)
+
+**Platform**
+- OAuth2 authorization code flow with JWT access tokens, stored in HttpOnly cookies
+- Role-based access control (`ADMIN` and `USER`)
+- Service discovery, centralized configuration and a single API entry point
+- Redis-backed rate limiting on user routes
+- Graceful fallbacks in the UI when a backend service is unavailable
+- Fully containerized with Docker Compose
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser([Browser]) --> UI["React UI<br/>port 5173"]
+    UI -->|REST + session cookie| GW["API Gateway<br/>8084"]
+
+    GW -->|OAuth2 login| AUTH["Auth Server<br/>8086"]
+    GW --> USER["User Service<br/>8081"]
+    GW --> HOTEL["Hotel Service<br/>8082"]
+    GW --> RATING["Rating Service<br/>8083"]
+    GW --> CHAT["Chatbot Service<br/>8087"]
+    GW -.->|rate limiting| REDIS[("Redis")]
+
+    AUTH --> AUTHDB[("PostgreSQL<br/>auth")]
+    AUTH -->|Feign| USER
+    USER --> MYSQL[("MySQL")]
+    HOTEL --> HOTELDB[("PostgreSQL<br/>hotels")]
+    RATING --> MONGO[("MongoDB")]
+
+    CHAT -->|Feign| HOTEL
+    CHAT -->|Feign| RATING
+    CHAT --> VEC[("PostgreSQL<br/>+ pgvector")]
+    CHAT --> OLLAMA["Ollama<br/>llama3.2 + nomic-embed-text"]
 ```
+
+Every service registers with **Eureka** and loads its configuration from the **Config Server**, which reads from a Git repository ([Hemant15-Bl/Config](https://github.com/Hemant15-Bl/Config)).
+
+### Services
+
+| Service | Port | Responsibility | Data store |
+|---|---|---|---|
+| Service Registry (Eureka) | 8761 | Service discovery | - |
+| Config Server | 8085 | Centralized, Git-backed configuration | Git |
+| API Gateway | 8084 | Routing, OAuth2 client login, token relay, rate limiting | Redis |
+| Auth Server | 8086 | Spring Authorization Server: login, JWT issuing, roles | PostgreSQL |
+| User Service | 8081 | User profiles and admin activity log | MySQL |
+| Hotel Service | 8082 | Hotels, details and images | PostgreSQL |
+| Rating Service | 8083 | Reviews and ratings | MongoDB |
+| Chatbot Service | 8087 | AI assistant (RAG over hotels and reviews) | PostgreSQL + pgvector |
+| Frontend | 5173 | React application served by Nginx | - |
+
+### Gateway routes
+
+| Path | Service |
+|---|---|
+| `/api/v4/**` | Auth Server |
+| `/api/v1/user/**`, `/api/v1/admin/**` | User Service |
+| `/api/v2/hotel/**` | Hotel Service |
+| `/api/v3/rating/**` | Rating Service |
+| `/chat/**` | Chatbot Service |
+
+### Authentication flow
+
+The browser never handles tokens directly. The gateway acts as the OAuth2 client, completes the authorization code flow with the Auth Server, and keeps the resulting JWTs in HttpOnly cookies. It then relays the token to the downstream services.
+
+<p align="center">
+  <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Screenshot%202026-01-02%20103702.png?raw=true" alt="OAuth2 authorization code flow between the browser, API gateway, auth server and services" width="85%">
+</p>
+
 ---
 
-## 🛠️ Tech Stack
-- **Category:**          Technologies
-- **Backend:**           Java 17+, Spring Boot 3.x, Maven
-- **Microservices:**     Spring Cloud (Eureka, Config Server, API Gateway)
-- **SecuritySpring:**    Security, JWT, OAuth2 (AuthServer)
-- **Frontend:**          React.js, Vite, Axios, Bootstrap/Tailwind
-- **Databases:**         MySQL (Users), MongoDB (Ratings), PostgreSQL(Hotels/Auth)
+## Tech stack
+
+| Category | Technologies |
+|---|---|
+| Backend | Java 17, Spring Boot 3.x (Spring Boot 4 for the chatbot), Maven |
+| Microservices | Spring Cloud: Eureka, Config Server, Gateway (reactive), OpenFeign |
+| Security | Spring Security, Spring Authorization Server, OAuth2, JWT |
+| AI | Spring AI 2.0, Ollama (`llama3.2`, `nomic-embed-text`), pgvector |
+| Frontend | React, Vite, Axios, React Router, Bootstrap (reactstrap) |
+| Databases | MySQL (users), PostgreSQL (hotels, auth, vectors), MongoDB (ratings), Redis (rate limiting) |
+| DevOps | Docker, Docker Compose, Docker Hub images |
 
 ---
 
-## 📡 Microservices Architecture
-### Core Services
-1. AuthServer (Port: 8086): Dedicated service for issuing JWT tokens and handling User Authentication.
-2. API Gateway (Port: 8084): The single entry point for the Frontend. Handles routing and security filtering.
-3. Config Server (Port: 8085): Centralized configuration management for all services.
-4. Service Registry (Port: 8761): Netflix Eureka server for service discovery.
+## AI assistant (chatbot)
 
-### Business Services
-- User Service (8081): Manages user profiles and booking history.
-- Hotel Service (8082): Handles hotel inventory and room details.
-- Rating Service (8083): Manages hotel reviews and ratings (NoSQL).
+The **Hotel Assistant** is a chat widget available to logged-in users. It is built with **Spring AI** and runs a local LLM through **Ollama**, so no external AI API or key is needed.
 
-## 💻 Frontend Features (React)
-- Modern UI: Redesigned Home, About, and Contact pages.
-- Secure Access: Integrated with AuthServer for Login/Signup.
-- Dynamic Dashboard: Users can view and rate hotels in real-time.
-- Admin Panel: Dedicated routes for adding hotels and managing inventory.
+**How it works**
 
-## 🐳 Containerization & Deployment
-This project is fully Dockerized to ensure consistent environments across Development, Testing, and Production. It uses Docker Compose to manage the multi-container setup, including networking, volumes for persistent data, and health-checked startup sequences.
+1. At startup, the Chatbot Service reads hotels and ratings from the Hotel and Rating services (through Feign).
+2. Each hotel description and review is turned into an embedding (`nomic-embed-text`, 768 dimensions) and stored in **pgvector**.
+3. For each question, the most relevant reviews are retrieved and sent to `llama3.2` together with the question (retrieval-augmented generation, RAG).
+4. Conversation memory is kept per logged-in user, identified by the JWT subject.
 
-### 🏗️ Docker Architecture
-- **Isolation**: Each service (Java, React, Databases) runs in its own isolated container.
-- **Persistence**: Docker Volumes are used for MySQL, PostgreSQL, and MongoDB to ensure data survives container restarts.
-- **Networking**: A dedicated bridge network (rating-net) allows services to communicate using container names (e.g., http://auth-service:8086) instead of volatile IP addresses.
-- **Optimization**: Uses SerialGC and TieredCompilation flags to optimize JVM performance in resource-constrained environments (like 8GB RAM systems).
+**API**
 
-## 🚀 Getting Started
-### 1. Prerequisites
-Before running the application, ensure you have the following installed:
-- **Docker Desktop** (Allocated with at least 8GB RAM for optimal performance).
+```http
+POST /chat
+Content-Type: application/json
+
+{ "message": "Which hotels do guests say have good food?" }
+```
+
+The endpoint requires authentication and is reached through the gateway (`http://localhost:8084/chat`).
+
+**Requirements**
+
+- [Ollama](https://ollama.com) installed on the host machine with both models pulled:
+  ```bash
+  ollama pull llama3.2
+  ollama pull nomic-embed-text
+  ```
+- On Windows, set the environment variable `OLLAMA_HOST=0.0.0.0` and restart Ollama, so the containers can reach it through `host.docker.internal:11434`.
+- A local model needs extra memory (roughly 3 GB). On a CPU-only machine the first answer can take a while. The chatbot is optional, and the rest of the application works without it.
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- **Docker Desktop** (8 GB RAM allocated or more is recommended)
 - **Git**
-- **Node.js & npm** (Only if running frontend manually).
-### 2. Installation & Setup
-Follow these steps to get the system up and running on your local machine:
- ### Step 1: Clone the Repository
-````Bash
+- **Node.js and npm** (only if you run the frontend manually)
+- **Ollama** (only if you want the AI assistant)
+
+### 1. Clone the repository
+
+```bash
 git clone https://github.com/Hemant15-Bl/hotel_ratings_app.git
 cd hotel_ratings_app
-````
+```
 
-## Step 2: Run with Docker (Recommended)
-The simplest way to start the entire ecosystem is using the optimized startup script. This handles the specific order required for Eureka, Config Server, and the Auth Server to stabilize.
+### 2. Start the application
+
+The startup script launches the services in the order they need (Eureka, Config Server, Auth Server, then the rest):
+
 ```bash
-# Run the automated batch script (Windows)
+# Windows
 start-app.bat
 ```
-#### ⏱️ Note on Startup Time:
-- **8GB RAM Systems:** Initial boot may take **7-8 minutes** as 7+ JVMs initialize and perform database migrations.
-- **16GB+ RAM Systems:** Expect a much faster startup of **2-3 minutes.**
 
-## Step 3: Access the Application 
-Once the containers are "Healthy" in Docker Desktop:
-- Frontend: http://localhost:5173
-- Eureka Dashboard: http://localhost:8761
-- API Gateway: http://localhost:8084
+Or start everything directly with Docker Compose:
 
+```bash
+docker-compose up -d
+```
 
----
+**Startup time**
 
-## User Panel
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/landingPage.jpeg?raw=true)
+- **8 GB RAM systems:** the first boot can take **7-8 minutes**, because 8 or more JVMs start and run database migrations.
+- **16 GB+ RAM systems:** expect about **2-3 minutes**.
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Signin(H).jpeg?raw=true)
+### 3. Open the application
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Signup(H).jpeg?raw=true)
+Once the containers show as healthy in Docker Desktop:
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Contact.png?raw=true)
+| What | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API Gateway | http://localhost:8084 |
+| Eureka dashboard | http://localhost:8761 |
+| Config Server | http://localhost:8085 |
+| Auth Server | http://localhost:8086 |
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/About.png?raw=true)
+### Troubleshooting
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Dashboard(H).jpeg?raw=true)
-
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/View-hotel-user.png?raw=true)
-
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Profile.png?raw=true)
-
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Update.png?raw=true)
+- **Image pulls fail with TLS or timeout errors:** run `docker-compose pull` again, or pull images one at a time. Layers that already downloaded are kept.
+- **A service is missing in Eureka:** wait a few minutes. Services start in order and register as they become healthy.
+- **Chat requests are slow or time out:** check that Ollama is running, that both models are pulled, and that Docker has enough memory.
 
 ---
 
+## Configuration and security notes
+
+- Configuration lives in the [Config repository](https://github.com/Hemant15-Bl/Config) and is served by the Config Server. Container-specific values (database URLs, issuer URI, Ollama URL) are set as environment variables in `docker-compose.yml`.
+- The credentials in `docker-compose.yml` and the OAuth2 client secret are **development defaults**. Change them, and keep real secrets out of Git, before deploying anywhere public.
+- Port `8087` (Chatbot Service) is published for local debugging. In a deployment, expose it only through the API Gateway.
+- Set the `secure` flag on the auth cookies to `true` when serving over HTTPS.
+
 ---
-## Admin Panel
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/Admin-dashboard.png?raw=true)
+## Containerization
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/users.png?raw=true)
+The whole system runs with Docker Compose.
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/hotels.png?raw=true)
+- **Isolation:** every service, database and the frontend runs in its own container.
+- **Persistence:** named volumes keep MySQL, PostgreSQL, MongoDB, Redis and the pgvector database across restarts, and hold uploaded hotel and user images.
+- **Networking:** a bridge network (`rating-net`) lets services talk to each other by container name (for example `http://auth-service:8086`).
+- **Startup order:** health checks and `depends_on` conditions make the infrastructure services start before the services that need them.
+- **Resource tuning:** JVM flags (`SerialGC`, tiered compilation) and per-container memory limits keep memory usage low on small machines.
+- **Images:** the application images are published on [Docker Hub](https://hub.docker.com/u/hemantbarole). Watchtower can optionally keep containers up to date.
 
-![image alt](https://github.com/Hemant15-Bl/Microservices/blob/master/ratings.png?raw=true)
+```text
+hotel_ratings_app
+├── Backend
+│   ├── ServiceRegistry     # Eureka server
+│   ├── ConfigServer        # Centralized configuration
+│   ├── APIGateway          # Routing, OAuth2 client, rate limiting
+│   ├── AuthServer          # Spring Authorization Server
+│   ├── UserService         # MySQL
+│   ├── HotelServices       # PostgreSQL
+│   ├── RatingServices      # MongoDB
+│   └── ChatbotService      # Spring AI, pgvector, Ollama
+├── Frontend                # React + Vite
+├── docker-compose.yml
+└── start-app.bat
+```
+
+---
+
+## Screenshots
+
+### User panel
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Signin(H).jpeg?raw=true" alt="Sign in page"><br>
+      <sub>Sign in</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Signup(H).jpeg?raw=true" alt="Create account page"><br>
+      <sub>Create account</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Dashboard(H).jpeg?raw=true" alt="User dashboard with featured hotels"><br>
+      <sub>Dashboard</sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/View-hotel-user.png?raw=true" alt="Hotel details with ratings and reviews"><br>
+      <sub>Hotel details and reviews</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Profile.png?raw=true" alt="User profile page"><br>
+      <sub>Profile</sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Update.png?raw=true" alt="Edit profile page"><br>
+      <sub>Edit profile</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/About.png?raw=true" alt="About page"><br>
+      <sub>About</sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Contact.png?raw=true" alt="Contact page"><br>
+      <sub>Contact</sub>
+    </td>
+  </tr>
+</table>
+
+### AI assistant
+
+<!--
+  After uploading a chatbot screenshot to the image repository, replace the URL and remove these comment markers:
+
+  <p align="center">
+    <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Chatbot.png?raw=true" alt="Hotel Assistant chat widget answering a question about hotel reviews" width="60%">
+  </p>
+-->
+
+### Admin panel
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/Admin-dashboard.png?raw=true" alt="Admin dashboard"><br>
+      <sub>Admin dashboard</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/users.png?raw=true" alt="User management"><br>
+      <sub>Users</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/hotels.png?raw=true" alt="Hotel management"><br>
+      <sub>Hotels</sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/Hemant15-Bl/Microservices/blob/master/ratings.png?raw=true" alt="Rating management"><br>
+      <sub>Ratings</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Roadmap
+
+- [ ] Sign in with Google (federated login through the Auth Server)
+- [ ] Stream chatbot answers to the UI as they are generated
+- [ ] Persist the JWT signing key so tokens survive Auth Server restarts
+- [ ] CI pipeline that builds and publishes the Docker images
+
+---
+
+## Author
+
+Built by [Hemant15-Bl](https://github.com/Hemant15-Bl). Docker images: [hemantbarole](https://hub.docker.com/u/hemantbarole).
