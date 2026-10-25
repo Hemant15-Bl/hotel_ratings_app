@@ -21,6 +21,7 @@ A distributed full-stack application built with a **microservices architecture**
 - [Getting started](#getting-started)
 - [Configuration and security notes](#configuration-and-security-notes)
 - [Containerization](#containerization)
+- [Performance testing](#performance-testing)
 - [Screenshots](#screenshots)
 - [Roadmap](#roadmap)
 
@@ -276,6 +277,58 @@ hotel_ratings_app
 ├── docker-compose.yml
 └── start-app.bat
 ```
+
+---
+
+## Performance testing
+
+The API Gateway, Hotel Service and Rating Service were load-tested with [k6](https://k6.io) using the script in [`tests/load/loadtest.js`](tests/load/loadtest.js).
+
+**Test setup**
+
+- **Machine:** a development laptop with 8 GB RAM and 2 CPU cores, with WSL2 memory limits applied. All 8 services, the databases and k6 itself ran on the same machine, so the load generator competed with the services for CPU.
+- **Traffic:** read-only requests through the API Gateway with a valid JWT: the hotel list, a hotel's details and a hotel's ratings. Each virtual user repeats the three requests and then waits (think time).
+- **Not covered:** the AI assistant (a local model on CPU answers one request at a time), write requests, and the login flow.
+
+**Results**
+
+| Metric | Light test | Level 1 |
+|---|---|---|
+| Virtual users (peak) | 15 | 20 |
+| Think time | 1 s | 0.2 s |
+| Duration | 3 min 30 s | 1 min 45 s |
+| Total requests | 5,050 | 8,443 |
+| Throughput (average) | 24 req/s | 80 req/s |
+| Average latency | 24 ms | 130 ms |
+| Median latency | 17 ms | 101 ms |
+| p95 latency | 58 ms | 309 ms |
+| p99 latency | n/a | 543 ms |
+| Slowest request | 0.9 s | 2.7 s |
+| Error rate | 0% | 0% |
+
+**What the results show**
+
+- No request failed at either load level, and every threshold (error rate under 1%, p95 under 800 ms) passed.
+- At 20 users with a short think time, throughput rose about 3.3 times compared with the light test, but average latency rose about 5 times. Latency growing faster than throughput suggests that requests had started to queue on the 2-core test machine.
+- The slowest requests are rare spikes: the p99 is 543 ms, while the worst was 2.7 s.
+- Higher load levels have not been tested yet.
+
+**Run it yourself**
+
+1. [Install k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) and start the application.
+2. Log in through the browser and copy the value of the `AUTH_TOKEN` cookie (DevTools, Application, Cookies). It is valid for 60 minutes.
+3. Run the tests from the folder that contains the script:
+
+```bash
+# Light test: 15 users, 1 s think time
+k6 run -e TOKEN=<AUTH_TOKEN value> tests/load/loadtest.js
+
+# Level 1: 20 users, 0.2 s think time
+k6 run -e TOKEN=<AUTH_TOKEN value> -e THINK=0.2 --stage 30s:20,1m:20,15s:0 \
+  --summary-trend-stats="avg,med,p(90),p(95),p(99),max" tests/load/loadtest.js
+```
+
+> Never commit a real token. It acts like a password while it is valid.
 
 ---
 
